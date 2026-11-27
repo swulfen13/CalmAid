@@ -7,6 +7,7 @@ import { classify } from '../src/engine/classify.ts';
 import { parseCommand } from '../src/hooks/useDictation.ts';
 import { SCENARIOS, runScenario, toMarkdown } from '../src/testlab/scenarios.ts';
 import { checkStep } from '../src/engine/safetyGuard.ts';
+import { parseKeys, withKeyFallback } from '../src/engine/aiShared.ts';
 
 let errors = 0;
 const fail = (m: string) => { console.error('✗', m); errors++; };
@@ -95,6 +96,26 @@ const guard: [string, boolean][] = [
 ];
 for (const [t, ok] of guard) if (checkStep({ text: t }).ok !== ok) fail(`guard("${t}") expected ${ok ? 'allowed' : 'blocked'}`);
 if (checkStep({ text: 'Give 5 abdominal thrusts.' }, 'baby').ok) fail('guard: abdominal thrusts on baby not blocked');
+
+// ---- Multiple Gemini keys (GEMINI_API_KEY=key1,key2) ----
+{
+  const k = parseKeys(' a, b ,,a\nc ');
+  if (k.join('|') !== 'a|b|c') fail(`parseKeys → ${k.join('|')}, expected a|b|c`);
+  if (parseKeys(undefined).length !== 0) fail('parseKeys(undefined) should be empty');
+  const err = (status: number) => Object.assign(new Error('x' + status), { status });
+  const used: string[] = [];
+  const r = await withKeyFallback(['k1', 'k2'], async (key) => { used.push(key); if (key === 'k1') throw err(429); return 'ok:' + key; });
+  if (r !== 'ok:k2' || used.join() !== 'k1,k2') fail(`key fallback on 429: got ${r}, used ${used}`);
+  for (const s of [401, 403, 503]) {
+    const r2 = await withKeyFallback(['k1', 'k2'], async (key) => { if (key === 'k1') throw err(s); return key; }).catch(() => 'threw');
+    if (r2 !== 'k2') fail(`key fallback on ${s}: got ${r2}`);
+  }
+  const bad = await withKeyFallback(['k1', 'k2'], async () => { throw err(400); }).catch((e) => (e as { status?: number }).status);
+  if (bad !== 400) fail('400 (bad request) must not switch keys');
+  const used2: string[] = [];
+  const allFail = await withKeyFallback(['k1', 'k2'], async (key) => { used2.push(key); throw err(429); }).catch((e) => (e as Error).message);
+  if (allFail !== 'x429' || used2.length !== 2) fail('all keys busy should throw last error after trying each');
+}
 
 // ---- Jury test cases (R2) + edge cases ----
 const results = [];

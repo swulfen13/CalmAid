@@ -116,6 +116,29 @@ const wait = (ms: number, signal?: AbortSignal) =>
     });
   });
 
+/** Splits GEMINI_API_KEY="key1,key2" into distinct keys (commas, spaces or newlines). */
+export function parseKeys(raw: string | undefined): string[] {
+  return [...new Set((raw ?? '').split(/[\s,;]+/).map((k) => k.trim()).filter(Boolean))];
+}
+
+/** Statuses where another key may succeed: invalid/blocked key, quota, overload. */
+const KEY_SWITCH = new Set([401, 403, 429, 500, 502, 503, 504]);
+
+/** Tries each key in order; switches on key/quota/overload errors, rethrows anything else. */
+export async function withKeyFallback<T>(keys: string[], fn: (key: string) => Promise<T>): Promise<T> {
+  let lastErr: unknown = new Error('No API key');
+  for (const key of keys) {
+    try {
+      return await fn(key);
+    } catch (e) {
+      lastErr = e;
+      const status = (e as { status?: number }).status;
+      if (!status || !KEY_SWITCH.has(status)) throw e;
+    }
+  }
+  throw lastErr;
+}
+
 /**
  * Gemini call with up to 2 quick retries on overload (429/5xx).
  * The caller's AbortSignal still caps the total time, so the user never waits longer than the timeout.
@@ -141,7 +164,7 @@ export async function callGemini(
   throw lastErr;
 }
 
-async function callGeminiOnce(
+export async function callGeminiOnce(
   req: AiRequest,
   apiKey: string,
   model: string,
