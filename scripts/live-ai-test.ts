@@ -1,3 +1,4 @@
+import { parseKeys } from '../src/engine/aiShared.ts';
 /**
  * Live AI test: runs the jury scenarios against the real Gemini API.
  *   1. Put GEMINI_API_KEY into .env.local
@@ -19,7 +20,7 @@ function loadEnv() {
 }
 
 loadEnv();
-const key = process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY ?? '';
+const key = parseKeys(process.env.GEMINI_API_KEY ?? process.env.VITE_GEMINI_API_KEY)[0] ?? '';
 const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 if (!key) {
   console.error('✗ No GEMINI_API_KEY in .env.local');

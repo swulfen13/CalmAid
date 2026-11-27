@@ -55,11 +55,13 @@ export function ForJudges({ onBack, onTests, onAi }: { onBack: () => void; onTes
               <small>Scan with the camera. Vibration works in Android browsers.</small>
             </div>
           )}
-          <div className="qr-box">
-            {EXPO_URL && expoQr ? <img src={expoQr} alt="QR code to open the CalmAid app in Expo Go" /> : <div className="qr-ph">Expo link added at deployment</div>}
-            <strong>CalmAid app (iOS + Android)</strong>
-            <small>Install "Expo Go", then scan. Real haptics on iPhone too.</small>
-          </div>
+          {EXPO_URL && (
+            <div className="qr-box">
+              {expoQr ? <img src={expoQr} alt="QR code to open the CalmAid app in Expo Go" /> : <div className="qr-ph" />}
+              <strong>CalmAid app (iOS + Android)</strong>
+              <small>Install "Expo Go", then scan. Real haptics on iPhone too.</small>
+            </div>
+          )}
         </div>
       </section>
 

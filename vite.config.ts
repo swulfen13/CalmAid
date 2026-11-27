@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { callGemini, validateRequest } from './src/engine/aiShared.ts';
+import { callGemini, parseKeys, validateRequest } from './src/engine/aiShared.ts';
 
 /**
  * Local twin of the Vercel function api/guide.ts, so `npm run dev` works the same way:
@@ -25,7 +25,7 @@ function aiDevProxy(key: string, model: string): Plugin {
             res.statusCode = 400;
             return res.end(JSON.stringify({ error: 'Invalid request' }));
           }
-          const reply = await callGemini(body, key, model, AbortSignal.timeout(11500));
+          const reply = await callGemini(body, parseKeys(key)[0] ?? '', model, AbortSignal.timeout(11500));
           res.end(JSON.stringify(reply));
         } catch (err) {
           res.statusCode = 502;
