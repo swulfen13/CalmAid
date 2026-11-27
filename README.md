@@ -4,6 +4,8 @@
 One instruction per screen, read aloud, with a CPR coach and an automatic report for the paramedics.
 No login, no install, works offline.
 
+**Live demo:** https://calmaid-omega.vercel.app · **Demo video:** see the Devpost page
+
 > CalmAid gives general first-aid guidance. It does **not** replace emergency services or a doctor.
 > In a life-threatening situation, always call your local emergency number (112 / 911 / 999 …) first.
 
@@ -48,7 +50,7 @@ Every minute without CPR in cardiac arrest lowers the chance of survival by roug
 - **Handbook:** 19 searchable chapters for reading at your own pace (recognise · help · never · children · when to call, plus myths, first-aid kit, "Am I allowed to help?"). Linked from every finished emergency guide.
 - **15 quick guides** for everyday situations. Sources listed in the app.
 
-**Mobile app (Expo)**: same app on iOS and Android via Expo Go, adding **native haptics** (iPhone browsers can't vibrate), **keep-awake** and native speech, plus a native offline emergency screen. See [`mobile/README.md`](mobile/README.md).
+**Mobile app (Expo, experimental, not part of the judged submission)**: same app on iOS and Android via Expo Go, adding **native haptics** (iPhone browsers can't vibrate), **keep-awake** and native speech, plus a native offline emergency screen. See [`mobile/README.md`](mobile/README.md).
 
 **Settings**: local emergency number by country, 12 guidance languages, hands-free mode, vibration, dark mode, medical ID, install as app.
 **Transparency**: **For judges** page (3-minute tour + QR codes for phone and app), "How CalmAid uses AI" page and a **Test Lab** that runs the jury test cases live.
@@ -179,13 +181,25 @@ The start screen then shows **"AI on · safety-checked · offline backup"**.
 npm run test:ai      # reads GEMINI_API_KEY from .env.local, writes test-results-live.md
 ```
 
-### Mobile app (Expo Go)
+### Mobile app (Expo Go, experimental)
+Not part of the judged submission: since May 2026 Expo Go only loads EAS updates for the project owner, so judges should use the web app.
 ```bash
 npm run dev:lan                                   # web app reachable on your Wi-Fi
 cd mobile && npm install
 EXPO_PUBLIC_WEB_URL=http://<your-ip>:5173 npx expo start   # scan with Expo Go
 ```
-For judges after deployment: set `expo.extra.webUrl` to the Vercel URL, publish with `eas update`, put the link in `VITE_EXPO_URL` so the **For judges** page shows its QR code.
+Publish your own build with `eas update`; set `VITE_EXPO_URL` to show its QR code on the **For judges** page.
+
+### Third-party services & dependencies
+| What | Used for | Needed? |
+|---|---|---|
+| **Google Gemini API** (`gemini-3.5-flash-lite`, Google AI Studio key) | free text, speech, photos, other languages | optional: without a key the reviewed offline protocols run |
+| **Vercel** | hosting + serverless function `api/guide.ts` (keeps the key on the server) | for the live deployment |
+| **Browser APIs**: Web Speech, Web Audio, Vibration, Geolocation, Wake Lock | voice, CPR beat, haptics, location card, screen on | built in, no account |
+| **npm packages**: React 19, Vite, vite-plugin-pwa (Workbox), qrcode, TypeScript, oxlint, tsx | app, PWA, QR codes, build & checks | installed by `npm ci` (see `package.json`) |
+| **Expo SDK 58** (`mobile/`) | experimental native shell | optional |
+
+No database, no user accounts, no tracking. Secrets are never committed: the key lives only in `.env.local` (git-ignored) or in Vercel environment variables.
 
 ### Demo mode
 Open `/?demo`: all timers last 10 seconds, ideal for recording the video.
