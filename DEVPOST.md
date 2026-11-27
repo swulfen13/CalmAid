@@ -12,31 +12,105 @@ Panic-proof first aid: tap, speak or type what's happening and CalmAid gives one
 
 ---
 
-## About the project (Project Story)
+## About the project (Project Description: the five questions)
 
-## Inspiration
-In an emergency, the people closest are almost never trained. They panic, search the web and scroll through long guides while minutes pass. In cardiac arrest, every minute without CPR lowers the chance of survival by roughly 7–10 %. We wanted the opposite of a web page: **one calm instruction at a time**, from the first second until the paramedics arrive.
+> Paste everything from here down to "Built with" into **About the project**. The three separate form fields below reuse the matching answers.
 
-## What it does
-- **Help now:** tap what is happening, or speak, type or take a photo. CalmAid asks at most two yes/no questions, then gives one plain-language action per screen, read aloud, with drawings, timers and a CPR coach (110 beats per minute plus vibration).
-- **Always safe:** the local emergency number and "Not breathing? Start CPR" are on every screen. A GPS card helps you tell the dispatcher where you are.
-- **Handover:** CalmAid writes a timestamped report for the paramedics (observations, actions, CPR time, photo, location) and shows it as a QR code.
-- **Learn:** a Duolingo-style path (21 steps, XP, streaks, badges) with lessons, put-in-order, myth-or-fact, tap-the-spot, branching scenarios and a CPR rhythm challenge that measures your tapping speed live, plus a 19-chapter searchable handbook, so people are ready *before* an emergency.
-- Adult / child / baby modes, 12 languages, hands-free voice commands, dark mode, installable offline PWA. No login, no database.
+## 1. Who is CalmAid for, and why would they use it?
 
-## How we built it
-React 19 + TypeScript + Vite as an installable PWA (Workbox). Web Speech API for voice in and out, Web Audio API for the CPR metronome, Vibration and Geolocation APIs. **Gemini 3.5 Flash-Lite** runs behind a Vercel serverless proxy (`api/guide.ts`), so the API key never reaches the browser. A deterministic offline engine with reviewed decision trees is the safety baseline, and the AI sits on top of it.
+**Users:** lay people with a smartphone and no medical training: parents, colleagues, passers-by.
+**Situation:** a colleague collapses in the office, a child chokes at dinner, someone cuts their hand badly in the kitchen. The person next to them panics, searches the web and scrolls through long guides while minutes pass.
 
-## Challenges we ran into
-- **Safe when the AI is wrong or absent.** We designed the offline protocols first, then added AI on top with a safety guard and rule-based overrides ("not breathing" always means CPR, never a model decision).
-- **Real-world API behavior.** The first model we picked was retired for new users (HTTP 404), the larger models took 30 to 160 seconds under load, and the free tier hit rate limits (429) and overloads (503). We benchmarked models, added quick retries, support for several API keys, and a seamless switch to the offline protocol.
-- **Small mistakes with big consequences.** Our tests caught a baby-choking screen that still mentioned belly thrusts and a too-broad "breathing" rule that would have started CPR on a choking question. Both were fixed and are now covered by tests.
+**Why it matters:** the American Heart Association states that [every minute CPR is delayed, the chance of survival drops by about 10 %](https://international.heart.org/resuscitation/hands-only-cpr), and AHA research found that [CPR within two minutes gave 81 % higher odds of survival](https://newsroom.heart.org/news/bystander-cpr-up-to-10-minutes-after-cardiac-arrest-may-protect-brain-function). The bottleneck is not knowledge on the internet, it is a frightened person finding the right action fast.
 
-## What we learned
-In a life-critical app, the most important AI feature is a good fallback. Measuring latency beat reading model specs, and an automated test for every protocol path made it safe to change things quickly.
+| Web search / long guides | CalmAid |
+|---|---|
+| Scroll, read, interpret, often in jargon | One short action per screen, read aloud |
+| Same text for everyone | Max. 2 yes/no questions → the right path (adult / child / baby) |
+| Hands busy, phone in the way | Voice commands, CPR beat with vibration, screen stays on |
+| Nothing for the paramedics | Timestamped handover report + QR code |
+| Needs signal | Installable PWA with full offline protocols |
 
-## What's next
-Review by certified first-aid trainers, translated offline protocols, a native mobile app, a nearby-AED map and address lookup for the location card.
+On calm days, a short **Learn** path (lessons, myth-or-fact, put-in-order, tap-the-spot, a live CPR rhythm challenge) and a 19-chapter handbook help people prepare *before* an emergency.
+
+## 2. What did we build during the hackathon?
+
+CalmAid is a **new project, built from scratch during the event** by a solo developer. Everything in the repo was created during the hackathon:
+- the guide engine with reviewed decision trees for adult, child and baby (9 emergencies);
+- the Gemini integration behind a server-side proxy, with safety guard, rule-based overrides, offline fallback and support for several API keys;
+- CPR coach (110/min beat + vibration), timers, voice in/out, photo input, GPS card for the dispatcher, paramedic handover report with QR code;
+- the Learn path and handbook;
+- the in-app **Reliability Test Lab**, the automated test suite and GitHub Actions CI;
+- the 2:30 demo video (recorded automatically from the real app; voice-over recorded by us).
+
+**Shown in the demo:** AI flow 0:15–0:48, quick-button protocol 0:48–0:59, hard edge case 0:59–1:20, Test Lab 1:20–1:32, AI transparency 1:32–1:43, Learn path 1:43–2:23.
+
+**Third-party parts (not our work):** Google Gemini API, Vercel hosting, React / Vite / vite-plugin-pwa (Workbox), the `qrcode` package and browser APIs (Web Speech, Web Audio, Vibration, Geolocation, Wake Lock). The protocol content follows public lay guidance from ERC 2021, AHA and Red Cross. Full list in the [README](https://github.com/swulfen13/CalmAid#third-party-services--dependencies).
+
+## 3. How did we use AI?
+
+### AI in the finished project
+- **Model and job:** Google **Gemini 3.5 Flash-Lite** via a Vercel serverless proxy (`api/guide.ts`, key never in the browser). It turns messy free text, speech and photos in 12 languages into the right protocol, picks at most two follow-up questions, writes one short action per screen and adds notes to the handover report.
+- **Why this model (A3), measured, not guessed:** in our benchmark, 2.5 Flash returned HTTP 404 (retired for new users), 3.5 Flash took 162 s under load, 3.6/3.8 Flash timed out (> 30 s), while **3.5 Flash-Lite answered correctly in about 6.5 s**. Stressed users need speed; it also supports JSON-schema output, images and many languages in one model.
+- **Project-specific AI decision (A2): hybrid design.** Quick buttons start the reviewed protocol instantly (0 s, no AI call, works offline); the AI is only used where rules fail: free text, speech, photos, other languages. Evidence: the Test Lab case "Quick button Heavy bleeding" passes with no AI call, and the German free-text case below is understood by the AI.
+- **Repeatability:** temperature 0, topK 1, fixed seed and a strict JSON schema, so the same input gives the same guidance (5/5 identical runs).
+- **Quality assessment (R2 + limits):** 11 scenarios run offline in CI and **live against real Gemini** (`npm run test:ai`, 36 API calls per run); in live mode a case only passes if the model itself answered, not the offline fallback. **11/11 passed.** Also verified in the app: German free text *"Mein Opa ist umgekippt und redet ganz komisch, eine Gesichtshälfte hängt runter"* → AI: *"Call 112 now and tell them the face is drooping."* What this shows: the AI handles everyday and multilingual input reliably; what it does not show: that every possible photo or phrasing is understood, which is why life-critical decisions are never left to the model (see question 5).
+
+### AI during development
+- **Tool:** **Claude (Anthropic)** as coding assistant for architecture, React/TypeScript code, first drafts of the protocols, tests and documentation.
+- **How we checked it:** protocol content against ERC 2021 / AHA / Red Cross lay guidance; an automated suite (`npm run check`, also in GitHub Actions) that walks every protocol path for all age groups plus classifier, voice commands, safety guard and the jury scenarios; end-to-end browser tests; live runs against Gemini.
+- **What the checks found and what happened to the AI-written work:**
+  - A baby-choking end screen still mentioned *belly thrusts* (adult technique) → **changed** to a baby-specific screen.
+  - A "breathing" override would have started CPR on the choking question "Can they cough, speak or breathe?" → **changed** to real breathing checks only.
+  - The first live run "passed" 10/10 only because every AI call failed (404) and the offline fallback took over → the test was **rejected** and rewritten to require real AI answers; model switched after benchmarking.
+  - The banner showed a fixed "112 / 911" → **changed** to the local number per country.
+  - The rest of the generated code was **kept** after passing the checks.
+
+## 4. How can people access and use it, and what results does it achieve?
+
+**Access:** open **https://calmaid-omega.vercel.app** in any modern browser (phone or laptop). No account, no install, no cost. Optional permissions: location (GPS card), microphone (voice), camera (photo), all asked only when used. AI needs internet; the reviewed protocols also work offline (installable PWA). Code: https://github.com/swulfen13/CalmAid (`npm ci && npm run dev`; AI optional with a Gemini key in `.env.local`).
+
+**Main task:** a panicking bystander gets from "something is wrong" to the right first action in seconds. **A successful result:** the right protocol for the situation and age group, the call advice at the right moment, one clear action per screen, no harmful advice, and a report for the paramedics.
+
+**Results (R2)**, run live in the app (Settings → Test Lab, see screenshot `07-testlab`) and in CI:
+
+| Case | Input | Should happen | What happened |
+|---|---|---|---|
+| Ordinary 1 | "My friend cut his hand with a kitchen knife and it is bleeding a lot" | Firm direct pressure, call advised, safe end screen | ✅ AI: "Press hard on the cut with a clean cloth right now." → "Call 112 now…" (video 0:15–0:48) |
+| Ordinary 2 | "I spilled boiling water on my arm" | Cool under running water 20 min (timer), no myths | ✅ cooling + 20-min timer → remove rings → cover loosely |
+| Repeat check | Ordinary 2, 5 runs | Identical guidance | ✅ 5/5 identical |
+| Demanding | "There's blood everywhere and she's not breathing" | CPR first, no questions | ✅ CPR starts immediately, rule-based, before any AI call (video 0:59–1:20) |
+
+Plus 7 extra cases (unclear input, baby choking, hybrid quick button, harmful AI advice blocked, AI outage, "not breathing" override, 3rd question refused): **11/11 pass**. In our own browser test we also clicked through all 9 emergencies × adult/child/baby (27 flows) with no errors.
+
+**Design choices that reduce effort:**
+- Opens straight on "What is happening?" with 9 big buttons, no login or onboarding.
+- At most 2 yes/no questions, then one action per screen, read aloud, tap targets ≥ 56 px.
+- Emergency number and "Not breathing? Start CPR" on every screen; the tab bar hides during an emergency so nothing is tapped by accident.
+- Speak, type or photo instead of choosing from menus; CPR beat with vibration and screen kept on.
+- The handover report is written automatically, so the helper never has to remember times.
+
+## 5. Limitations, and what happens when something goes wrong
+
+**Limitations**
+- General lay first aid only: no diagnosis, no medication doses, not a replacement for emergency services. Content follows ERC/AHA/Red Cross guidance but is **not yet reviewed by a certified trainer**.
+- AI needs internet and a server-side key; offline protocols are English only.
+- Photos or text can be misread.
+- Hands-free voice answers depend on the browser's speech recognition (best in Chrome); iOS is silent with the mute switch on.
+- The native mobile shell in `mobile/` (Expo) is **experimental and not part of this submission**; the video's end card mentions it, but judges should use the web app.
+- **Planned:** trainer review, translated offline protocols, nearby-AED map, address lookup.
+
+**Failure handling (evidence: Test Lab cases, all passing)**
+
+| Problem | How CalmAid detects it | What the user gets |
+|---|---|---|
+| AI gives harmful advice (e.g. "make him vomit", butter on a burn, belly thrusts on a baby) | Safety guard scans every AI step for 10 known myths, negation-aware | Step blocked, reviewed protocol continues ("harmful AI advice blocked" case) |
+| AI misses a life-threatening sign | "Not breathing" is checked by code before and during the AI flow | CPR starts immediately ("not breathing override" case) |
+| AI asks too much | Validation refuses a 3rd question | Jumps to action ("3rd question refused" case) |
+| AI down, timeout (12 s), quota (429), overload (503), malformed reply | Error / timeout / schema validation | Quick retries, switch to the next API key, then the reviewed offline protocol, with a notice ("AI outage" case) |
+| Unclear input ("asdf help ???") | Low-confidence classification | Asks if the person is awake and breathing, advises calling ("unclear input" case) |
+| App crash | Error boundary | Still shows the emergency number and CPR / bleeding basics |
+| Wrong country number | Country from time zone first, then language | Local number; changeable in Settings |
 
 ---
 
@@ -61,56 +135,8 @@ Upload the 10 screenshots from the `screenshots` folder (JPG, max 5 MB each).
 
 ---
 
-## What did your team build or improve during this hackathon?
+## The three extra form fields
 
-CalmAid is an entirely new project, built from scratch during the event. Everything was built during the hackathon: the guide engine with reviewed adult, child and baby protocols; the Gemini integration behind a server-side proxy with a safety guard, rule-based overrides and offline fallback; the CPR coach, timers, voice in/out, photo input, GPS card and paramedic handover report with QR code; the Learn path and handbook; the in-app Reliability Test Lab; the automated test suite and CI; and the demo video.
-
-## How did your team use AI?
-
-**AI in the finished product: Google Gemini 3.5 Flash-Lite** (via Google AI Studio, server-side proxy on Vercel).
-- Turns messy free text and speech in 12 languages into the right protocol, reads photos ("AI sees: palm-sized burn with blisters"), chooses the follow-up questions and writes handover notes.
-- Hybrid design: quick buttons start the reviewed protocol instantly with no AI call. The AI handles what rules can't: free text, speech, photos and other languages.
-- Chosen by measurement: 3.5 Flash-Lite answered correctly in about 6.5 s, while larger models timed out under load. Settings: `thinkingLevel: minimal`, temperature 0, topK 1, fixed seed and a JSON schema, so replies are repeatable and always have the exact UI shape.
-- Protection against wrong advice: life-critical decisions are rule-based; strict prompt and schema (one action, max 15 words, no diagnosis, no doses); validation of every reply; a safety guard that blocks 10 known harmful myths (making someone vomit, butter on burns, belly thrusts on babies, doses …); on timeout, error or a blocked step the app switches to the reviewed offline protocol and tells the user. Emergency number and CPR button are always visible.
-
-**AI during development: Claude (Anthropic)** as coding assistant for architecture, code, protocol drafts, tests and documentation.
-- How we reviewed it: protocol content was checked against ERC 2021, AHA and Red Cross lay-rescuer guidance. An automated suite (`npm run check`, also in GitHub Actions) walks every protocol path for adult, child and baby, plus the classifier, voice commands, the safety guard and the jury scenarios. We also ran end-to-end browser tests and live runs against the real Gemini API.
-- What review caught: a baby-choking screen that mentioned belly thrusts, an over-broad "breathing" rule, non-repeatable answers (fixed with temperature 0 and a seed), and a first live run that only passed through the offline fallback (we made the live test require real AI answers).
-
-## How can judges run or evaluate your project?
-
-**Fastest:** open https://calmaid-omega.vercel.app on a phone or laptop. No login, no setup, no key needed. Tap **Settings → For judges** for a 3-minute guided tour.
-
-**Suggested tour**
-1. Tap **Heavy bleeding** (instant reviewed protocol, no AI).
-2. Tap **Type** and enter *"I spilled boiling water on my arm"* (AI picks the protocol, 20-minute cooling timer).
-3. Tap **Unconscious**, answer **No** twice and tap through to the CPR coach (beat and vibration).
-4. Open **Report for paramedics** for the handover report and QR code.
-5. Open **Settings → Reliability Test Lab** and run the jury tests live.
-
-**Test cases** (run live in the app and in CI)
-
-| Type | Input | Expected | Result |
-|---|---|---|---|
-| Standard 1 | "My friend cut his hand with a kitchen knife and it is bleeding a lot" | Call advised, firm direct pressure, safe end screen | ✅ |
-| Standard 2 | "I spilled boiling water on my arm" | Cool running water 20 min (timer), no myths | ✅ |
-| Repeat | Standard 2, run 5× | Identical guidance every run | ✅ 5/5 identical |
-| Edge case | "There's blood everywhere and she's not breathing" | CPR first, no questions, rule-based | ✅ |
-
-Plus 7 automated edge cases (unclear input, baby choking, hybrid quick button, harmful AI advice blocked, AI outage, "not breathing" override, third AI question refused): **11/11 pass**, offline in CI and live against Gemini.
-
-**Run locally**
-```bash
-git clone https://github.com/swulfen13/CalmAid && cd CalmAid
-npm ci
-npm run check   # all protocol paths + 11 test scenarios, no key needed
-npm run dev     # optional: put GEMINI_API_KEY=... in .env.local for AI
-```
-
-**Known limitations**
-- Not a substitute for professional training or the emergency services. Content is based on ERC/AHA/Red Cross lay guidance but not yet reviewed by a certified trainer.
-- AI needs internet and a Gemini key on the server; without it, the app uses keyword matching and the reviewed offline protocols (English only).
-- Photos or text can be misread, so the app never diagnoses.
-- Hands-free voice answers depend on the browser's speech recognition (best in Chrome); iOS is silent when the mute switch is on.
-
-**External dependencies:** Google Gemini API (server-side, key held in Vercel environment variables), Vercel hosting. No database, no accounts.
+- **What did your team build or improve during this hackathon?** → paste answer **2** from above.
+- **How did your team use AI?** → paste answer **3** from above.
+- **How can judges run or evaluate your project?** → paste answer **4** from above (plus answer 5 if there is room).
