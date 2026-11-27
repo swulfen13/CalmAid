@@ -42,7 +42,16 @@
       "backgroundColor": "#1f6f66"
     },
     "extra": {
-      "webUrl": "https://YOUR-CALMAID.vercel.app"
+      "webUrl": "https://YOUR-CALMAID.vercel.app",
+      "eas": {
+        "projectId": "f7933aa8-7c08-4e4c-8ec8-2b3881b17c13"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f7933aa8-7c08-4e4c-8ec8-2b3881b17c13"
     }
   }
 }
