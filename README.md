@@ -171,7 +171,7 @@ The start screen then shows **"AI on · safety-checked · offline backup"**.
 
 ### Deploy to Vercel
 1. Push to a public GitHub repo → **Import** in Vercel (Vite is auto-detected).
-2. Settings → Environment Variables: `GEMINI_API_KEY` (optional `GEMINI_MODEL`).
+2. Settings → Environment Variables: `GEMINI_API_KEY` (optional `GEMINI_MODEL`). Several keys: `key1,key2` — the next one is used when a key is out of quota or overloaded.
 3. Deploy. Without the variable the app runs in offline mode.
 
 ### Live AI test (real Gemini, all jury scenarios)
