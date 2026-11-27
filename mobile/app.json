@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "CalmAid",
+    "slug": "calmaid",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.calmaid.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "CalmAid shows your position so you can tell the emergency dispatcher where you are.",
+        "NSMicrophoneUsageDescription": "CalmAid listens for short voice answers like yes, no and next.",
+        "NSCameraUsageDescription": "Take a photo of the situation for the guide and the paramedic report."
+      }
+    },
+    "android": {
+      "package": "app.calmaid.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#1f6f66",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "VIBRATE"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "backgroundColor": "#eef4f2",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1f6f66"
+    },
+    "extra": {
+      "webUrl": "https://YOUR-CALMAID.vercel.app"
+    }
+  }
+}

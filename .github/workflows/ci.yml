@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Protocol graph (adult/child/baby), classifier, voice commands, safety guard, R2 jury scenarios
+      - run: npm run check -- --md
+      # Type-check + production build (incl. PWA service worker)
+      - run: npm run build
