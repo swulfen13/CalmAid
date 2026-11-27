@@ -5,8 +5,8 @@
 **Tagline:** Calm, one-step-at-a-time first aid for anyone, powered by AI and safe even when the AI isn't.
 
 **Links**
-- Live demo: TODO (Vercel URL)
-- GitHub: TODO (public repo)
+- Live demo: https://calmaid-omega.vercel.app
+- GitHub: https://github.com/swulfen13/CalmAid
 - Video: TODO (YouTube / Vimeo / Loom, public)
 - Mobile (Expo Go): TODO (eas update link / QR)
 
