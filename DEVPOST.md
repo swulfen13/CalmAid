@@ -100,6 +100,11 @@ Plus 7 extra cases (unclear input, baby choking, hybrid quick button, harmful AI
 - The native mobile shell in `mobile/` (Expo) is **experimental and not part of this submission**; the video's end card mentions it, but judges should use the web app.
 - **Planned:** trainer review, translated offline protocols, nearby-AED map, address lookup.
 
+**Simulated or special conditions (clearly labelled)**
+
+- Four failure cases in the Test Lab (harmful AI advice, AI outage, "not breathing" override, 3rd question refused) use a **simulated AI response**, because the real model cannot be made to fail on demand. They test our safety code, not Gemini. The other 7 cases run against the real model.
+- The demo video was recorded automatically from the real app with real Gemini answers, in **demo mode** (`/?demo`: timers last 10 seconds instead of minutes) and with a **fixed test GPS position** (Berlin). Nothing else in the video is mocked.
+
 **Failure handling (evidence: Test Lab cases, all passing)**
 
 | Problem | How CalmAid detects it | What the user gets |
